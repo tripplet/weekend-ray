@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'weekend-ray'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=weekend-ray",
+                    "--package=weekend-ray"
+                ],
+                "filter": {
+                    "name": "weekend-ray",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'weekend-ray'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=weekend-ray",
+                    "--package=weekend-ray"
+                ],
+                "filter": {
+                    "name": "weekend-ray",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

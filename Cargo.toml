@@ -1,0 +1,10 @@
+[package]
+name = "weekend-ray"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+auto_ops = { git = "https://github.com/carbotaniuman/auto_ops", rev = "74d97b4" }
+png = "0.17.9"
