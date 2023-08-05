@@ -1,7 +1,9 @@
+use std::ops::Neg;
+
 use auto_ops::impl_op_ex;
 
-#[derive(Copy, Clone)]
-pub struct Vector3D{
+#[derive(Copy, Clone, serde::Deserialize)]
+pub struct Vector3D {
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -19,11 +21,16 @@ impl_op_ex!(+= #[inline] |a: &mut Vector3D, b: &Vector3D| {
     a.z += b.z;
 });
 
-impl_op_ex!(- #[inline] |a: &Vector3D, b: &Vector3D| -> Vector3D { Vector3D {
-    x: a.x - b.x,
-    y: a.y - b.y,
-    z: a.z - b.z,
-}});
+impl_op_ex!(
+    -#[inline]
+    |a: &Vector3D, b: &Vector3D| -> Vector3D {
+        Vector3D {
+            x: a.x - b.x,
+            y: a.y - b.y,
+            z: a.z - b.z,
+        }
+    }
+);
 
 impl_op_ex!(-= #[inline] |a: &mut Vector3D, b: &Vector3D| {
     a.x -= b.x;
@@ -31,11 +38,16 @@ impl_op_ex!(-= #[inline] |a: &mut Vector3D, b: &Vector3D| {
     a.z -= b.z;
 });
 
-impl_op_ex!(* #[inline] |a: &Vector3D, b: &Vector3D| -> Vector3D { Vector3D {
-    x: a.x * b.x,
-    y: a.y * b.y,
-    z: a.z * b.z,
-}});
+impl_op_ex!(
+    *#[inline]
+    |a: &Vector3D, b: &Vector3D| -> Vector3D {
+        Vector3D {
+            x: a.x * b.x,
+            y: a.y * b.y,
+            z: a.z * b.z,
+        }
+    }
+);
 
 impl_op_ex!(*= #[inline] |a: &mut Vector3D, b: &Vector3D| {
     a.x *= b.x;
@@ -43,17 +55,27 @@ impl_op_ex!(*= #[inline] |a: &mut Vector3D, b: &Vector3D| {
     a.z *= b.z;
 });
 
-impl_op_ex!(* #[inline] |a: &Vector3D, b: f32| -> Vector3D { Vector3D {
-    x: a.x * b,
-    y: a.y * b,
-    z: a.z * b,
-}});
+impl_op_ex!(
+    *#[inline]
+    |a: &Vector3D, b: f32| -> Vector3D {
+        Vector3D {
+            x: a.x * b,
+            y: a.y * b,
+            z: a.z * b,
+        }
+    }
+);
 
-impl_op_ex!(* #[inline] |b: f32, a: &Vector3D| -> Vector3D { Vector3D {
-    x: a.x * b,
-    y: a.y * b,
-    z: a.z * b,
-}});
+impl_op_ex!(
+    *#[inline]
+    |b: f32, a: &Vector3D| -> Vector3D {
+        Vector3D {
+            x: a.x * b,
+            y: a.y * b,
+            z: a.z * b,
+        }
+    }
+);
 
 impl_op_ex!(*= #[inline] |a: &mut Vector3D, b: f32| {
     a.x *= b;
@@ -73,6 +95,18 @@ impl_op_ex!(/= #[inline] |a: &mut Vector3D, b: f32| {
     a.z /= b;
 });
 
+impl Neg for Vector3D {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Vector3D {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
 impl Default for Vector3D {
     fn default() -> Self {
         Vector3D { x: 0.0, y: 0.0, z: 0.0 }
@@ -81,12 +115,16 @@ impl Default for Vector3D {
 
 #[macro_export]
 macro_rules! v3d {
-    ($x:expr, $y:expr, $z:expr) => { crate::vec3d::Vector3D { x: $x, y: $y, z: $z } };
+    ($x:expr, $y:expr, $z:expr) => {
+        $crate::vec3d::Vector3D { x: $x, y: $y, z: $z }
+    };
 }
 
 #[macro_export]
 macro_rules! v3d_zero {
-    () => { crate::vec3d::Vector3D::default() };
+    () => {
+        $crate::vec3d::Vector3D::default()
+    };
 }
 
 impl Vector3D {

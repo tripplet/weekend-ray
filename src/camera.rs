@@ -1,10 +1,13 @@
+use rayon::prelude::*;
+
+use crate::{color, v3d_zero};
 use crate::color::Color;
-use crate::{color, v3d};
 
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3d::Vector3D;
 
+#[derive(serde::Deserialize)]
 pub struct Camera {
     pub look_from: Vector3D,
     pub look_at: Vector3D,
@@ -16,7 +19,9 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn render(&self, image_width: u16) -> Vec<Color> {
+    pub fn render(&self, image_width: u16, samples_per_pixel: u16, objects: &Vec<Sphere>) -> Vec<Color> {
+        use rand::prelude::*;
+
         let theta = self.vfov.to_radians();
         let viewport_height = (theta / 2.0).tan() * 2.0;
         let viewport_width = self.aspect_ratio * viewport_height;
@@ -34,37 +39,43 @@ impl Camera {
 
         let mut img = Vec::with_capacity(image_height as usize * image_width as usize);
 
-        for h in 0..image_height {
+        let mut rng = rand::thread_rng();
+
+        for h in (0..image_height).rev() {
             for w in 0..image_width {
-                let h_part = h as f32 / (image_height - 1) as f32;
-                let w_part = w as f32 / (image_width - 1) as f32;
+                let mut color = v3d_zero!();
 
-                let r = Ray {
-                    origin: self.look_from,
-                    direction: lower_left_corner + horizontal * w_part + vertical * h_part
-                        - self.look_from,
-                };
+                for s in 0..samples_per_pixel {
+                    let h_fraction = (h as f32 + rng.gen::<f32>())  / (image_height - 1) as f32;
+                    let w_fraction = (w as f32 + rng.gen::<f32>())  / (image_width - 1) as f32;
 
-                img.push(Camera::ray_color(&r));
+                    let r = Ray {
+                        origin: self.look_from,
+                        direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
+                    };
+
+                    color += Camera::ray_color(&r, objects);
+                }
+
+                img.push(color / samples_per_pixel as f32);
             }
         }
 
         img
     }
 
-    fn ray_color(ray: &Ray) -> Color {
-        let sphere = Sphere {
-            origin: v3d!(0.0, 0.0, -1.0),
-            radius: 0.5,
-        };
+    fn ray_color(ray: &Ray, objects: &Vec<Sphere>) -> Color {
+        use crate::hittable::Hittable;
 
-        if let Some(t) = sphere.hit(&ray) {
-            let normal_vec = (ray.at(t) - v3d!(0.0, 0.0, -1.0)).unit();
-            return color!(normal_vec.x + 1.0, normal_vec.y + 1.0, normal_vec.z + 1.0) * 0.5;
+        for sphere in objects {
+            if let Some(hit) = sphere.hit(ray, 0.0, f32::INFINITY) {
+                return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
+            }
         }
 
+        // blue sky background
         let unit_direction = ray.direction.unit();
         let t = 0.5 * (unit_direction.y + 1.0);
-        return color!(1.0, 1.0, 1.0) * (1.0 - t) + color!(0.5, 0.7, 1.0) * t;
+        color!(1.0, 1.0, 1.0) * (1.0 - t) + color!(0.5, 0.7, 1.0) * t
     }
 }
