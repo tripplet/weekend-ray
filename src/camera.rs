@@ -1,7 +1,8 @@
 use rayon::prelude::*;
+use rand::prelude::*;
 
-use crate::{color, v3d_zero};
 use crate::color::Color;
+use crate::{color, v3d_zero};
 
 use crate::ray::Ray;
 use crate::sphere::Sphere;
@@ -20,7 +21,6 @@ pub struct Camera {
 
 impl Camera {
     pub fn render(&self, image_width: u16, samples_per_pixel: u16, objects: &Vec<Sphere>) -> Vec<Color> {
-        use rand::prelude::*;
 
         let theta = self.vfov.to_radians();
         let viewport_height = (theta / 2.0).tan() * 2.0;
@@ -37,31 +37,48 @@ impl Camera {
 
         let image_height = (image_width as f32 / self.aspect_ratio) as u16;
 
-        let mut img = Vec::with_capacity(image_height as usize * image_width as usize);
+        let mut img = vec![v3d_zero!(); image_height as usize * image_width as usize];
 
-        let mut rng = rand::thread_rng();
-
-        for h in (0..image_height).rev() {
-            for w in 0..image_width {
-                let mut color = v3d_zero!();
-
-                for s in 0..samples_per_pixel {
-                    let h_fraction = (h as f32 + rng.gen::<f32>())  / (image_height - 1) as f32;
-                    let w_fraction = (w as f32 + rng.gen::<f32>())  / (image_width - 1) as f32;
-
-                    let r = Ray {
-                        origin: self.look_from,
-                        direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
-                    };
-
-                    color += Camera::ray_color(&r, objects);
-                }
-
-                img.push(color / samples_per_pixel as f32);
+        img.par_chunks_mut(image_width as usize).enumerate().for_each(
+            |(h, line)|  {
+                self.render_line((image_height as usize - h) as u16, line, image_width, image_height, samples_per_pixel, &horizontal, &vertical, &lower_left_corner, objects)
             }
-        }
+        );
 
         img
+    }
+
+    fn render_line(
+        &self,
+        h: u16,
+        line: &mut [Vector3D],
+        image_width: u16,
+        image_height: u16,
+        samples_per_pixel: u16,
+        horizontal: &Vector3D,
+        vertical: &Vector3D,
+        lower_left_corner: &Vector3D,
+        objects: &Vec<Sphere>,
+    ) {
+        let mut rng = rand::thread_rng();
+
+        for w in 0..image_width {
+            let mut color = v3d_zero!();
+
+            for _ in 0..samples_per_pixel {
+                let h_fraction = (h as f32 + rng.gen::<f32>()) / (image_height - 1) as f32;
+                let w_fraction = (w as f32 + rng.gen::<f32>()) / (image_width - 1) as f32;
+
+                let r = Ray {
+                    origin: self.look_from,
+                    direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
+                };
+
+                color += Camera::ray_color(&r, objects);
+            }
+
+            line[w as usize] = color / samples_per_pixel as f32;
+        }
     }
 
     fn ray_color(ray: &Ray, objects: &Vec<Sphere>) -> Color {

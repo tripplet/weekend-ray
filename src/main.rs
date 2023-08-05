@@ -19,11 +19,11 @@ struct Config {
     #[arg()]
     input_file: String,
 
-    #[arg()]
+    #[arg(long)]
     width: u16,
 
-    #[arg(default_value = "100")]
-    samples_per_pixel: u16
+    #[arg(short, long, default_value = "100")]
+    samples_per_pixel: u16,
 }
 
 #[derive(serde::Deserialize)]
