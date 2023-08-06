@@ -5,8 +5,8 @@ use std::ops::Range;
 
 use serde::Deserialize;
 
-use crate::{color::Color, hittable::HitRecord, ray::Ray};
 use crate::color;
+use crate::{color::Color, hittable::HitRecord, ray::Ray};
 
 use lamertian::Lambertian;
 use metal::Metal;
@@ -15,7 +15,7 @@ pub trait Material: Send + Sync {
     fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<(Color, Ray)>;
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 pub enum MaterialConfig {
     Lambertian(Lambertian),
     Metal(Metal),

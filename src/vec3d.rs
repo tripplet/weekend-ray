@@ -163,7 +163,11 @@ impl Vec3d {
     }
 
     pub fn random_range(mut rng: impl rand::Rng, min: f32, max: f32) -> Self {
-        v3d!(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max))
+        v3d!(
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+            rng.gen_range(min..max)
+        )
     }
 
     /// Generate a vector to a point on the unit sphere
@@ -175,7 +179,7 @@ impl Vec3d {
         let y: f32 = rng.gen_range(-1.0..1.0);
         let z: f32 = rng.gen_range(-1.0..1.0);
 
-        let factor = 1.0 / (x*x + y*y + z*z).sqrt();
+        let factor = 1.0 / (x * x + y * y + z * z).sqrt();
         v3d!(x * factor, y * factor, z * factor)
     }
 
@@ -184,16 +188,16 @@ impl Vec3d {
         let y: f32 = rng(-1.0..1.0);
         let z: f32 = rng(-1.0..1.0);
 
-        let factor = 1.0 / (x*x + y*y + z*z).sqrt();
+        let factor = 1.0 / (x * x + y * y + z * z).sqrt();
         v3d!(x * factor, y * factor, z * factor)
     }
 
     pub fn random_in_hemisphere(rng: &mut impl rand::Rng, normal: &Vec3d) -> Self {
         let in_unit_sphere = Vec3d::random_unit_vector(rng);
-        if in_unit_sphere.dot(normal) > 0.0 { // In the same hemisphere as the normal
+        if in_unit_sphere.dot(normal) > 0.0 {
+            // In the same hemisphere as the normal
             in_unit_sphere
-        }
-        else {
+        } else {
             -in_unit_sphere
         }
     }
@@ -201,11 +205,15 @@ impl Vec3d {
 
 #[cfg(test)]
 mod tests {
-    use approx::*;
     use super::*;
+    use approx::*;
 
     #[test]
     fn test_random_in_unit_sphere() {
-        assert_relative_eq!(1.0, Vec3d::random_unit_vector(&mut rand::thread_rng()).length(), epsilon = 2.0 * f32::EPSILON);
+        assert_relative_eq!(
+            1.0,
+            Vec3d::random_unit_vector(&mut rand::thread_rng()).length(),
+            epsilon = 2.0 * f32::EPSILON
+        );
     }
 }

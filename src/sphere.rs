@@ -1,7 +1,8 @@
 use crate::{
     hittable::{HitRecord, Hittable},
+    material::MaterialConfig,
     ray::Ray,
-    vec3d::Vec3d, material::{Material, MaterialConfig},
+    vec3d::Vec3d,
 };
 
 #[derive(serde::Deserialize)]
@@ -41,6 +42,7 @@ impl Hittable for Sphere {
             normal: (point - self.origin) / self.radius,
             point,
             front_face: false,
+            material: self.material.clone(),
         };
 
         rec.set_normal_face(ray, &rec.normal.clone());

@@ -112,19 +112,15 @@ impl Camera {
             return color!(0.0, 0.0, 0.0);
         }
 
-        let mut rng_func = |range: Range<f32>| {
-            rng.gen_range(range)
-        };
+        let mut rng_func = |range: Range<f32>| rng.gen_range(range);
 
-        for sphere in world {
-            if let Some(hit) = sphere.hit(ray, 0.0001, f32::INFINITY) {
-                if let Some(scatter) = sphere.material.scatter(&mut rng_func, ray, &hit) {
-                    return scatter.0 * Camera::ray_color(&scatter.1, depth-1, rng, world);
-                }
-
-                return color!(0.0, 0.0, 0.0);
-                //return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
+        if let Some(hit) = world.hit(ray, 0.0001, f32::INFINITY) {
+            if let Some(scatter) = hit.material.scatter(&mut rng_func, ray, &hit) {
+                return scatter.0 * Camera::ray_color(&scatter.1, depth - 1, rng, world);
             }
+
+            return color!(0.0, 0.0, 0.0);
+            //return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
         }
 
         // blue sky background

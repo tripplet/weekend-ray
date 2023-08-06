@@ -11,10 +11,11 @@ use vec3d::Vec3d;
 mod camera;
 mod color;
 mod hittable;
+mod material;
 mod ray;
 mod sphere;
 mod vec3d;
-mod material;
+mod world;
 
 #[derive(Parser)]
 #[command(version)]
@@ -67,12 +68,20 @@ fn write_png(file_path: &str, image_width: usize, image_height: usize, pixels: &
 
     let mut writer = encoder.write_header().unwrap();
     _ = writer.write_image_data(
-        &pixels.iter().map(|pixel|
-            [
-                (pixel.x.clamp(0.0, 0.999) * 256.0) as u8,
-                (pixel.y.clamp(0.0, 0.999) * 256.0) as u8,
-                (pixel.z.clamp(0.0, 0.999) * 256.0) as u8
-            ]).collect::<Vec<_>>().into_iter().flatten().collect::<Vec<_>>());
+        &pixels
+            .iter()
+            .map(|pixel| {
+                [
+                    (pixel.x.clamp(0.0, 0.999) * 256.0) as u8,
+                    (pixel.y.clamp(0.0, 0.999) * 256.0) as u8,
+                    (pixel.z.clamp(0.0, 0.999) * 256.0) as u8,
+                ]
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>(),
+    );
 
     _ = writer.finish();
 }

@@ -1,16 +1,21 @@
 use std::ops::Range;
 
-use crate::{vec3d::Vec3d, color::Color, ray::Ray};
+use crate::{color::Color, ray::Ray, vec3d::Vec3d};
 
 use super::Material;
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 pub struct Lambertian {
     pub albedo: Color,
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, mut rnd: &mut dyn FnMut(Range<f32>) -> f32, _ray: &crate::ray::Ray, hit: &crate::hittable::HitRecord) -> Option<(Color, crate::ray::Ray)> {
+    fn scatter(
+        &self,
+        mut rnd: &mut dyn FnMut(Range<f32>) -> f32,
+        _ray: &crate::ray::Ray,
+        hit: &crate::hittable::HitRecord,
+    ) -> Option<(Color, crate::ray::Ray)> {
         let mut scatter_direction = hit.normal + Vec3d::random_unit_vector2(&mut rnd);
 
         // Catch degenerate scatter direction
@@ -18,6 +23,12 @@ impl Material for Lambertian {
             scatter_direction = hit.normal;
         }
 
-        Some((self.albedo, Ray { origin: hit.point, direction: scatter_direction }))
+        Some((
+            self.albedo,
+            Ray {
+                origin: hit.point,
+                direction: scatter_direction,
+            },
+        ))
     }
 }
