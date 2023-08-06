@@ -1,12 +1,12 @@
 use crate::{
     hittable::{HitRecord, Hittable},
     ray::Ray,
-    vec3d::Vector3D,
+    vec3d::Vec3d,
 };
 
 #[derive(serde::Deserialize)]
 pub struct Sphere {
-    pub origin: Vector3D,
+    pub origin: Vec3d,
     pub radius: f32,
 }
 

@@ -1,18 +1,18 @@
-use rayon::prelude::*;
 use rand::prelude::*;
+use rayon::prelude::*;
 
 use crate::color::Color;
 use crate::{color, v3d_zero};
 
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec3d::Vector3D;
+use crate::vec3d::Vec3d;
 
 #[derive(serde::Deserialize)]
 pub struct Camera {
-    pub look_from: Vector3D,
-    pub look_at: Vector3D,
-    pub vup: Vector3D,
+    pub look_from: Vec3d,
+    pub look_at: Vec3d,
+    pub vup: Vec3d,
 
     /// Vertical field-of-view in degrees
     pub vfov: f32,
@@ -20,8 +20,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn render(&self, image_width: u16, samples_per_pixel: u16, objects: &Vec<Sphere>) -> Vec<Color> {
-
+    pub fn render(&self, image_width: u16, samples_per_pixel: u16, depth: i16, objects: &Vec<Sphere>) -> Vec<Color> {
         let theta = self.vfov.to_radians();
         let viewport_height = (theta / 2.0).tan() * 2.0;
         let viewport_width = self.aspect_ratio * viewport_height;
@@ -39,11 +38,22 @@ impl Camera {
 
         let mut img = vec![v3d_zero!(); image_height as usize * image_width as usize];
 
-        img.par_chunks_mut(image_width as usize).enumerate().for_each(
-            |(h, line)|  {
-                self.render_line((image_height as usize - h) as u16, line, image_width, image_height, samples_per_pixel, &horizontal, &vertical, &lower_left_corner, objects)
-            }
-        );
+        img.par_chunks_mut(image_width as usize)
+            .enumerate()
+            .for_each(|(h, line)| {
+                self.render_line(
+                    (image_height as usize - h) as u16,
+                    line,
+                    image_width,
+                    image_height,
+                    depth,
+                    samples_per_pixel,
+                    &horizontal,
+                    &vertical,
+                    &lower_left_corner,
+                    objects,
+                )
+            });
 
         img
     }
@@ -51,16 +61,18 @@ impl Camera {
     fn render_line(
         &self,
         h: u16,
-        line: &mut [Vector3D],
+        line: &mut [Vec3d],
         image_width: u16,
         image_height: u16,
+        depth: i16,
         samples_per_pixel: u16,
-        horizontal: &Vector3D,
-        vertical: &Vector3D,
-        lower_left_corner: &Vector3D,
+        horizontal: &Vec3d,
+        vertical: &Vec3d,
+        lower_left_corner: &Vec3d,
         objects: &Vec<Sphere>,
     ) {
         let mut rng = rand::thread_rng();
+        let scale = 1.0 / samples_per_pixel as f32;
 
         for w in 0..image_width {
             let mut color = v3d_zero!();
@@ -74,19 +86,39 @@ impl Camera {
                     direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
                 };
 
-                color += Camera::ray_color(&r, objects);
+                color += Camera::ray_color(&r, depth, &mut rng, objects);
             }
 
-            line[w as usize] = color / samples_per_pixel as f32;
+            color.x = (color.x * scale).sqrt();
+            color.y = (color.y * scale).sqrt();
+            color.z = (color.z * scale).sqrt();
+
+            line[w as usize] = color;
         }
     }
 
-    fn ray_color(ray: &Ray, objects: &Vec<Sphere>) -> Color {
+    fn ray_color(ray: &Ray, depth: i16, rng: &mut impl rand::Rng, world: &Vec<Sphere>) -> Color {
         use crate::hittable::Hittable;
 
-        for sphere in objects {
-            if let Some(hit) = sphere.hit(ray, 0.0, f32::INFINITY) {
-                return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
+        if depth <= 0 {
+            return color!(0.0, 0.0, 0.0);
+        }
+
+        for sphere in world {
+            if let Some(hit) = sphere.hit(ray, 0.0001, f32::INFINITY) {
+                let target = hit.point + Vec3d::random_in_hemisphere(rng, &hit.normal);
+
+                return Camera::ray_color(
+                        &Ray {
+                            origin: hit.point,
+                            direction: target - hit.point,
+                        },
+                        depth - 1,
+                        rng,
+                        world,
+                    ) * 0.5;
+
+                //return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
             }
         }
 
