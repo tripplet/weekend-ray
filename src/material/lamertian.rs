@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::{vec3d::Vec3d, color::Color, ray::Ray};
 
-use super::material::Material;
+use super::Material;
 
 #[derive(serde::Deserialize)]
 pub struct Lambertian {

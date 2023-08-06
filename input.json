@@ -15,36 +15,83 @@
             "y": 1.0,
             "z": 0.0
         },
-
         "vfov": 90,
         "aspect_ratio": 1.77777
     },
-
     "objects": [
         {
+            "name": "center",
             "origin": {
                 "x": 0.0,
                 "y": 0.0,
                 "z": -1.0
             },
             "radius": 0.5,
-            "material-disable": {
-                "lambertian": {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "z": 0.0
+            "material": {
+                "Lambertian": {
+                    "albedo": {
+                        "x": 0.7,
+                        "y": 0.3,
+                        "z": 0.3
+                    }
                 }
             }
         },
         {
+            "name": "left",
+            "origin": {
+                "x": -1.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": 0.5,
+            "material": {
+                "Metal": {
+                    "albedo": {
+                        "x": 0.8,
+                        "y": 0.8,
+                        "z": 0.8
+                    },
+                    "fuzz": 0.3
+                }
+            }
+        },
+        {
+            "name": "right",
+            "origin": {
+                "x": 1.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": 0.5,
+            "material": {
+                "Metal": {
+                    "albedo": {
+                        "x": 0.8,
+                        "y": 0.6,
+                        "z": 0.2
+                    },
+                    "fuzz": 1.0
+                }
+            }
+        },
+        {
+            "name": "ground",
             "origin": {
                 "x": 0,
                 "y": -100.5,
                 "z": -1
             },
-            "radius": 100
+            "radius": 100,
+            "material": {
+                "Lambertian": {
+                    "albedo": {
+                        "x": 0.8,
+                        "y": 0.8,
+                        "z": 0.0
+                    }
+                }
+            }
         }
     ]
-
-
 }

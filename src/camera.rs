@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use crate::color::Color;
 use crate::{color, v3d_zero};
 
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3d::Vec3d;

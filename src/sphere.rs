@@ -1,14 +1,14 @@
 use crate::{
     hittable::{HitRecord, Hittable},
     ray::Ray,
-    vec3d::Vec3d, material::material::Material,
+    vec3d::Vec3d, material::{Material, MaterialConfig},
 };
 
 #[derive(serde::Deserialize)]
 pub struct Sphere {
     pub origin: Vec3d,
     pub radius: f32,
-    pub material: Box<dyn Material>,
+    pub material: MaterialConfig,
 }
 
 impl Hittable for Sphere {
