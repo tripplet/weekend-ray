@@ -10,7 +10,7 @@ auto_ops = { git = "https://github.com/carbotaniuman/auto_ops", rev = "74d97b4" 
 clap = { version = "4.3.19", features = ["derive"] }
 humantime = "2.1.0"
 png = "0.17.9"
-rand = "0.8.5"
+rand = { version = "0.8.5", features = ["small_rng"] }
 rayon = "1.7.0"
 serde = { version = "1.0.181", features = ["derive"] }
 serde_json = "1.0.104"

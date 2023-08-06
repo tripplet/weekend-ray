@@ -1,4 +1,5 @@
-use rand::prelude::*;
+use std::ops::Range;
+
 use rayon::prelude::*;
 
 use crate::color::Color;
@@ -71,22 +72,27 @@ impl Camera {
         lower_left_corner: &Vec3d,
         objects: &Vec<Sphere>,
     ) {
-        let mut rng = rand::thread_rng();
+        use rand::prelude::*;
+
+        // Create a big, expensive to initialize and slower, but unpredictable RNG.
+        // This is cached and done only once per thread.
+        let mut thread_rng = SmallRng::from_entropy();
+
         let scale = 1.0 / samples_per_pixel as f32;
 
         for w in 0..image_width {
             let mut color = v3d_zero!();
 
             for _ in 0..samples_per_pixel {
-                let h_fraction = (h as f32 + rng.gen::<f32>()) / (image_height - 1) as f32;
-                let w_fraction = (w as f32 + rng.gen::<f32>()) / (image_width - 1) as f32;
+                let h_fraction = (h as f32 + thread_rng.gen::<f32>()) / (image_height - 1) as f32;
+                let w_fraction = (w as f32 + thread_rng.gen::<f32>()) / (image_width - 1) as f32;
 
                 let r = Ray {
                     origin: self.look_from,
                     direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
                 };
 
-                color += Camera::ray_color(&r, depth, &mut rng, objects);
+                color += Camera::ray_color(&r, depth, &mut thread_rng, objects);
             }
 
             color.x = (color.x * scale).sqrt();
@@ -100,24 +106,22 @@ impl Camera {
     fn ray_color(ray: &Ray, depth: i16, rng: &mut impl rand::Rng, world: &Vec<Sphere>) -> Color {
         use crate::hittable::Hittable;
 
+        // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth <= 0 {
             return color!(0.0, 0.0, 0.0);
         }
 
+        let mut rng_func = |range: Range<f32>| {
+            rng.gen_range(range)
+        };
+
         for sphere in world {
             if let Some(hit) = sphere.hit(ray, 0.0001, f32::INFINITY) {
-                let target = hit.point + Vec3d::random_in_hemisphere(rng, &hit.normal);
+                if let Some(scatter) = sphere.material.scatter(&mut rng_func, ray, &hit) {
+                    return scatter.0 * Camera::ray_color(&scatter.1, depth-1, rng, world);
+                }
 
-                return Camera::ray_color(
-                        &Ray {
-                            origin: hit.point,
-                            direction: target - hit.point,
-                        },
-                        depth - 1,
-                        rng,
-                        world,
-                    ) * 0.5;
-
+                return color!(0.0, 0.0, 0.0);
                 //return color!(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0) * 0.5;
             }
         }

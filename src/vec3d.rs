@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::ops::{Neg, Range};
 
 use auto_ops::impl_op_ex;
 
@@ -148,6 +148,12 @@ impl Vec3d {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
+    /// Return true if the vector is close to zero in all dimensions.
+    pub fn is_near_zero(&self) -> bool {
+        let threshold = 1e-8;
+        (self.x.abs() < threshold) && (self.y.abs() < threshold) && (self.z.abs() < threshold)
+    }
+
     pub fn unit(&self) -> Self {
         self / self.length()
     }
@@ -173,6 +179,15 @@ impl Vec3d {
         v3d!(x * factor, y * factor, z * factor)
     }
 
+    pub fn random_unit_vector2(rng: &mut dyn FnMut(Range<f32>) -> f32) -> Self {
+        let x: f32 = rng(-1.0..1.0);
+        let y: f32 = rng(-1.0..1.0);
+        let z: f32 = rng(-1.0..1.0);
+
+        let factor = 1.0 / (x*x + y*y + z*z).sqrt();
+        v3d!(x * factor, y * factor, z * factor)
+    }
+
     pub fn random_in_hemisphere(rng: &mut impl rand::Rng, normal: &Vec3d) -> Self {
         let in_unit_sphere = Vec3d::random_unit_vector(rng);
         if in_unit_sphere.dot(normal) > 0.0 { // In the same hemisphere as the normal
@@ -191,6 +206,6 @@ mod tests {
 
     #[test]
     fn test_random_in_unit_sphere() {
-        assert_relative_eq!(1.0, Vec3d::random_in_unit_sphere(&mut rand::thread_rng()).length(), epsilon = 2.0 * f32::EPSILON);
+        assert_relative_eq!(1.0, Vec3d::random_unit_vector(&mut rand::thread_rng()).length(), epsilon = 2.0 * f32::EPSILON);
     }
 }

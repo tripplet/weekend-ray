@@ -13,6 +13,7 @@ mod hittable;
 mod ray;
 mod sphere;
 mod vec3d;
+mod material;
 
 #[derive(Parser)]
 #[command(version)]
