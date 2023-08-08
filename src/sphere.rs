@@ -42,7 +42,7 @@ impl Hittable for Sphere {
             normal: (point - self.origin) / self.radius,
             point,
             front_face: false,
-            material: self.material.clone(),
+            material: &self.material,
         };
 
         rec.set_normal_face(ray, &rec.normal.clone());

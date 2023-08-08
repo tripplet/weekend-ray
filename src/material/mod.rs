@@ -1,50 +1,37 @@
 pub mod lamertian;
 pub mod metal;
+pub mod dielectric;
 
 use std::ops::Range;
 
-use serde::Deserialize;
-
-use crate::color;
 use crate::{color::Color, hittable::HitRecord, ray::Ray};
 
 use lamertian::Lambertian;
 use metal::Metal;
+use dielectric::Dielectric;
 
 pub trait Material: Send + Sync {
-    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<(Color, Ray)>;
+    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult>;
+}
+
+pub struct ScatterResult {
+    pub ray: Ray,
+    pub attenuation: Color,
 }
 
 #[derive(Clone, serde::Deserialize)]
 pub enum MaterialConfig {
     Lambertian(Lambertian),
     Metal(Metal),
+    Dielectric(Dielectric),
 }
 
 impl Material for MaterialConfig {
-    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<(Color, Ray)> {
+    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult> {
         match &self {
             MaterialConfig::Lambertian(m) => m.scatter(rnd, ray, hit),
             MaterialConfig::Metal(m) => m.scatter(rnd, ray, hit),
+            MaterialConfig::Dielectric(m) => m.scatter(rnd, ray, hit),
         }
-    }
-}
-
-impl<'de> Deserialize<'de> for Box<dyn Material> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        // #[derive(Debug, Deserialize)]
-        // struct Inner {
-        //     topics: Vec<String>,
-        // }
-
-        // let a = deserializer.deserialize_map(HashMap<String, Inner>).unwrap();
-        // deserializer.deser
-
-        Ok(Box::new(Lambertian {
-            albedo: color!(0.8, 0.8, 0.0),
-        }))
     }
 }
