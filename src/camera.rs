@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use rand::prelude::*;
 use rayon::prelude::*;
 
 use crate::color::Color;
@@ -27,8 +28,8 @@ impl Camera {
         let viewport_height = (theta / 2.0).tan() * 2.0;
         let viewport_width = self.aspect_ratio * viewport_height;
 
-        let w = (self.look_from - self.look_at).unit();
-        let u = self.vup.cross(&w).unit();
+        let w = (self.look_from - self.look_at).unit_vector();
+        let u = self.vup.cross(&w).unit_vector();
         let v = w.cross(&u);
 
         let horizontal = u * viewport_width;
@@ -40,9 +41,13 @@ impl Camera {
 
         let mut img = vec![v3d_zero!(); image_height as usize * image_width as usize];
 
-        img.par_chunks_mut(image_width as usize)
-            .enumerate()
-            .for_each(|(h, line)| {
+        img.par_chunks_mut(image_width as usize).enumerate().for_each_init(
+            || {
+                // Create a big, expensive to initialize and slower, but unpredictable RNG.
+                // This is cached and done only once per thread / rayon job.
+                SmallRng::from_entropy()
+            },
+            |rng, (h, line)| {
                 self.render_line(
                     (image_height as usize - h) as u16,
                     line,
@@ -54,8 +59,10 @@ impl Camera {
                     &vertical,
                     &lower_left_corner,
                     objects,
+                    rng,
                 )
-            });
+            },
+        );
 
         img
     }
@@ -72,13 +79,8 @@ impl Camera {
         vertical: &Vec3d,
         lower_left_corner: &Vec3d,
         objects: &Vec<Sphere>,
+        mut thread_rng: &mut impl rand::Rng,
     ) {
-        use rand::prelude::*;
-
-        // Create a big, expensive to initialize and slower, but unpredictable RNG.
-        // This is cached and done only once per thread.
-        let mut thread_rng = SmallRng::from_entropy();
-
         let scale = 1.0 / samples_per_pixel as f32;
 
         for w in 0..image_width {
@@ -116,7 +118,7 @@ impl Camera {
 
         if let Some(hit) = world.hit(ray, 0.0001, f32::INFINITY) {
             if let Some(scatter) = hit.material.scatter(&mut rng_func, ray, &hit) {
-                return scatter.0 * Camera::ray_color(&scatter.1, depth - 1, rng, world);
+                return scatter.attenuation * Camera::ray_color(&scatter.ray, depth - 1, rng, world);
             }
 
             return color!(0.0, 0.0, 0.0);
@@ -124,7 +126,7 @@ impl Camera {
         }
 
         // blue sky background
-        let unit_direction = ray.direction.unit();
+        let unit_direction = ray.direction.unit_vector();
         let t = 0.5 * (unit_direction.y + 1.0);
         color!(1.0, 1.0, 1.0) * (1.0 - t) + color!(0.5, 0.7, 1.0) * t
     }
