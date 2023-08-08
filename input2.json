@@ -1,9 +1,9 @@
 {
     "camera": {
         "look_from": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.8
+            "x": -2.0,
+            "y": 2.0,
+            "z": 1.8
         },
         "look_at": {
             "x": 0.0,
@@ -15,7 +15,7 @@
             "y": 1.0,
             "z": 0.0
         },
-        "vfov": 60,
+        "vfov": 20,
         "aspect_ratio": 1.77777
     },
     "objects": [
@@ -30,15 +30,15 @@
             "material": {
                 "Lambertian": {
                     "albedo": {
-                        "x": 0.7,
-                        "y": 0.3,
-                        "z": 0.3
+                        "x": 0.1,
+                        "y": 0.2,
+                        "z": 0.5
                     }
                 }
             }
         },
         {
-            "name": "left",
+            "name": "left1",
             "origin": {
                 "x": -1.0,
                 "y": 0.0,
@@ -46,13 +46,22 @@
             },
             "radius": 0.5,
             "material": {
-                "Metal": {
-                    "albedo": {
-                        "x": 0.8,
-                        "y": 0.8,
-                        "z": 0.8
-                    },
-                    "fuzz": 0.3
+                "Dielectric": {
+                    "index_of_refraction": 1.5
+                }
+            }
+        },
+        {
+            "name": "left2",
+            "origin": {
+                "x": -1.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": -0.4,
+            "material": {
+                "Dielectric": {
+                    "index_of_refraction": 1.5
                 }
             }
         },
@@ -71,7 +80,7 @@
                         "y": 0.6,
                         "z": 0.2
                     },
-                    "fuzz": 1.0
+                    "fuzz": 0.0
                 }
             }
         },
