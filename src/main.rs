@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use camera::Camera;
+use camera::{Camera, CameraConfig};
 use clap::Parser;
 use vec3d::Vec3d;
 
@@ -35,7 +35,7 @@ struct Config {
 
 #[derive(serde::Deserialize)]
 struct InputFile {
-    camera: Camera,
+    camera: CameraConfig,
     objects: Vec<sphere::Sphere>,
 }
 
@@ -45,14 +45,16 @@ fn main() {
     // Read input file
     let input: InputFile =
         serde_json::from_str(&fs::read_to_string(cfg.input_file).expect("Unable to read input file")).unwrap();
-    let camera = input.camera;
     let image_width = cfg.width;
 
     let now = std::time::Instant::now();
-    let img = camera.render(image_width, cfg.samples_per_pixel, cfg.depth as i16, &input.objects);
+
+    let camera = Camera::new(&input.camera, image_width, cfg.samples_per_pixel, cfg.depth);
+
+    let img = camera.render(&input.objects);
     println!("Rendering took {}\n", humantime::format_duration(now.elapsed()));
 
-    let image_height = (image_width as f32 / camera.aspect_ratio) as usize;
+    let image_height = (image_width as f32 / camera.cfg.aspect_ratio) as usize;
 
     // write_ppm("image.ppm", image_width as usize, image_height, &img);
     write_png("image.png", image_width as usize, image_height, &img);

@@ -1,8 +1,4 @@
-use crate::{
-    material::MaterialConfig,
-    ray::Ray,
-    vec3d::Vec3d,
-};
+use crate::{material::MaterialConfig, ray::Ray, vec3d::Vec3d};
 
 pub struct HitRecord<'mat> {
     pub point: Vec3d,

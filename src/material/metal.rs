@@ -24,13 +24,13 @@ impl Material for Metal {
         };
 
         if scattered.direction.dot(&hit.normal) > 0.0 {
-            return Some(ScatterResult {
+            Some(ScatterResult {
                 attenuation: self.albedo,
                 ray: scattered,
-            });
+            })
+        } else {
+            None
         }
-
-        None
     }
 }
 

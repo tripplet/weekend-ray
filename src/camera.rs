@@ -13,6 +13,24 @@ use crate::vec3d::Vec3d;
 
 #[derive(serde::Deserialize)]
 pub struct Camera {
+    pub cfg: CameraConfig,
+
+    pub image_width: u16,
+    pub image_height: u16,
+
+    pub viewport_width: f32,
+    pub viewport_height: f32,
+
+    pub samples_per_pixel: u16,
+    pub depth: u16,
+
+    horizontal: Vec3d,
+    vertical: Vec3d,
+    lower_left_corner: Vec3d,
+}
+
+#[derive(Clone, serde::Deserialize)]
+pub struct CameraConfig {
     pub look_from: Vec3d,
     pub look_at: Vec3d,
     pub vup: Vec3d,
@@ -23,79 +41,68 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn render(&self, image_width: u16, samples_per_pixel: u16, depth: i16, objects: &Vec<Sphere>) -> Vec<Color> {
-        let theta = self.vfov.to_radians();
+    pub fn new(cfg: &CameraConfig, image_width: u16, samples_per_pixel: u16, depth: u16) -> Self {
+        let theta = cfg.vfov.to_radians();
         let viewport_height = (theta / 2.0).tan() * 2.0;
-        let viewport_width = self.aspect_ratio * viewport_height;
+        let viewport_width = cfg.aspect_ratio * viewport_height;
 
-        let w = (self.look_from - self.look_at).unit_vector();
-        let u = self.vup.cross(&w).unit_vector();
+        let w = (cfg.look_from - cfg.look_at).unit_vector();
+        let u = cfg.vup.cross(&w).unit_vector();
         let v = w.cross(&u);
 
         let horizontal = u * viewport_width;
         let vertical = v * viewport_height;
 
-        let lower_left_corner = self.look_from - horizontal / 2.0 - vertical / 2.0 - w;
+        let lower_left_corner = cfg.look_from - horizontal / 2.0 - vertical / 2.0 - w;
 
-        let image_height = (image_width as f32 / self.aspect_ratio) as u16;
+        let image_height = (image_width as f32 / cfg.aspect_ratio) as u16;
 
-        let mut img = vec![v3d_zero!(); image_height as usize * image_width as usize];
+        Self {
+            cfg: cfg.clone(),
+            image_width,
+            image_height,
+            viewport_width,
+            viewport_height,
+            samples_per_pixel,
+            depth,
+            horizontal,
+            vertical,
+            lower_left_corner,
+        }
+    }
 
-        img.par_chunks_mut(image_width as usize).enumerate().for_each_init(
+    pub fn render(&self, objects: &Vec<Sphere>) -> Vec<Color> {
+        let mut img = vec![v3d_zero!(); self.image_height as usize * self.image_width as usize];
+
+        img.par_chunks_mut(self.image_width as usize).enumerate().for_each_init(
             || {
                 // Create a big, expensive to initialize and slower, but unpredictable RNG.
                 // This is cached and done only once per thread / rayon job.
                 SmallRng::from_entropy()
             },
-            |rng, (h, line)| {
-                self.render_line(
-                    (image_height as usize - h) as u16,
-                    line,
-                    image_width,
-                    image_height,
-                    depth,
-                    samples_per_pixel,
-                    &horizontal,
-                    &vertical,
-                    &lower_left_corner,
-                    objects,
-                    rng,
-                )
-            },
+            |rng, (h, line)| self.render_line((self.image_height as usize - h) as u16, line, objects, rng),
         );
 
         img
     }
 
-    fn render_line(
-        &self,
-        h: u16,
-        line: &mut [Vec3d],
-        image_width: u16,
-        image_height: u16,
-        depth: i16,
-        samples_per_pixel: u16,
-        horizontal: &Vec3d,
-        vertical: &Vec3d,
-        lower_left_corner: &Vec3d,
-        objects: &Vec<Sphere>,
-        mut thread_rng: &mut impl rand::Rng,
-    ) {
-        let scale = 1.0 / samples_per_pixel as f32;
+    fn render_line(&self, h: u16, line: &mut [Vec3d], objects: &Vec<Sphere>, mut thread_rng: &mut impl rand::Rng) {
+        let scale = 1.0 / self.samples_per_pixel as f32;
 
-        for w in 0..image_width {
+        for w in 0..self.image_width {
             let mut color = v3d_zero!();
 
-            for _ in 0..samples_per_pixel {
-                let h_fraction = (h as f32 + thread_rng.gen::<f32>()) / (image_height - 1) as f32;
-                let w_fraction = (w as f32 + thread_rng.gen::<f32>()) / (image_width - 1) as f32;
+            for _ in 0..self.samples_per_pixel {
+                let h_fraction = (h as f32 + thread_rng.gen::<f32>()) / (self.image_height - 1) as f32;
+                let w_fraction = (w as f32 + thread_rng.gen::<f32>()) / (self.image_width - 1) as f32;
 
                 let r = Ray {
-                    origin: self.look_from,
-                    direction: lower_left_corner + horizontal * w_fraction + vertical * h_fraction - self.look_from,
+                    origin: self.cfg.look_from,
+                    direction: self.lower_left_corner + self.horizontal * w_fraction + self.vertical * h_fraction
+                        - self.cfg.look_from,
                 };
 
-                color += Camera::ray_color(&r, depth, &mut thread_rng, objects);
+                color += Camera::ray_color(&r, self.depth, &mut thread_rng, objects);
             }
 
             color.x = (color.x * scale).sqrt();
@@ -106,11 +113,11 @@ impl Camera {
         }
     }
 
-    fn ray_color(ray: &Ray, depth: i16, rng: &mut impl rand::Rng, world: &Vec<Sphere>) -> Color {
+    fn ray_color(ray: &Ray, depth: u16, rng: &mut impl rand::Rng, world: &Vec<Sphere>) -> Color {
         use crate::hittable::Hittable;
 
         // If we've exceeded the ray bounce limit, no more light is gathered.
-        if depth <= 0 {
+        if depth == 0 {
             return color!(0.0, 0.0, 0.0);
         }
 

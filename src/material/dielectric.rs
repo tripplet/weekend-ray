@@ -29,7 +29,7 @@ impl Material for Dielectric {
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
 
-        let new_direction = if cannot_refract || reflectance(cos_theta, refraction_ratio) > rnd(0.0 .. 1.0) {
+        let new_direction = if cannot_refract || reflectance(cos_theta, refraction_ratio) > rnd(0.0..1.0) {
             reflect(&unit_direction, &hit.normal)
         } else {
             refract(&unit_direction, &hit.normal, refraction_ratio, cos_theta)
@@ -47,7 +47,7 @@ impl Material for Dielectric {
 
 #[inline(always)]
 fn reflect(ray_in: &Vec3d, normal: &Vec3d) -> Vec3d {
-    ray_in - 2.0 * ray_in.dot(normal)*normal
+    ray_in - 2.0 * ray_in.dot(normal) * normal
 }
 
 #[inline(always)]
