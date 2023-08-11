@@ -9,4 +9,4 @@ Additional features
 
 # Final image:
 
-![](image.png)
+![](final.png)
