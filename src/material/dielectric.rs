@@ -4,15 +4,15 @@ use crate::vec3d::Vec3d;
 
 use super::{Material, ScatterResult};
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Dielectric {
-    pub index_of_refraction: f32,
+    pub index_of_refraction: f64,
 }
 
 impl Material for Dielectric {
     fn scatter(
         &self,
-        rnd: &mut dyn FnMut(std::ops::Range<f32>) -> f32,
+        rnd: &mut dyn FnMut(std::ops::Range<f64>) -> f64,
         ray: &crate::ray::Ray,
         hit: &crate::hittable::HitRecord,
     ) -> Option<ScatterResult> {
@@ -51,7 +51,7 @@ fn reflect(ray_in: &Vec3d, normal: &Vec3d) -> Vec3d {
 }
 
 #[inline(always)]
-fn refract(uv: &Vec3d, normal: &Vec3d, etai_over_etat: f32, cos_theta: f32) -> Vec3d {
+fn refract(uv: &Vec3d, normal: &Vec3d, etai_over_etat: f64, cos_theta: f64) -> Vec3d {
     let ray_out_perp = etai_over_etat * (uv + cos_theta * normal);
     let ray_out_parallel = -(1.0 - ray_out_perp.length_squared()).abs().sqrt() * normal;
     ray_out_perp + ray_out_parallel
@@ -61,7 +61,7 @@ fn refract(uv: &Vec3d, normal: &Vec3d, etai_over_etat: f32, cos_theta: f32) -> V
 ///
 /// Use Schlick's approximation for reflectance.
 #[inline(always)]
-fn reflectance(cosine: f32, refraction_ratio: f32) -> f32 {
+fn reflectance(cosine: f64, refraction_ratio: f64) -> f64 {
     let r0 = (1.0 - refraction_ratio) / (1.0 + refraction_ratio);
     let r0 = r0 * r0;
 

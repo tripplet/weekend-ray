@@ -4,16 +4,16 @@ use crate::{color::Color, ray::Ray, vec3d::Vec3d};
 
 use super::{Material, ScatterResult};
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Metal {
     pub albedo: Color,
-    pub fuzz: f32,
+    pub fuzz: f64,
 }
 
 impl Material for Metal {
     fn scatter(
         &self,
-        mut rnd: &mut dyn FnMut(Range<f32>) -> f32,
+        mut rnd: &mut dyn FnMut(Range<f64>) -> f64,
         ray: &crate::ray::Ray,
         hit: &crate::hittable::HitRecord,
     ) -> Option<ScatterResult> {

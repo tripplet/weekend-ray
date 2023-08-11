@@ -3,13 +3,13 @@ use crate::{material::MaterialConfig, ray::Ray, vec3d::Vec3d};
 pub struct HitRecord<'mat> {
     pub point: Vec3d,
     pub normal: Vec3d,
-    pub t: f32,
+    pub t: f64,
     pub front_face: bool,
     pub material: &'mat MaterialConfig,
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
 impl<'mat> HitRecord<'mat> {

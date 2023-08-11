@@ -4,7 +4,7 @@ use crate::{color::Color, ray::Ray, vec3d::Vec3d};
 
 use super::{Material, ScatterResult};
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Lambertian {
     pub albedo: Color,
 }
@@ -12,7 +12,7 @@ pub struct Lambertian {
 impl Material for Lambertian {
     fn scatter(
         &self,
-        mut rnd: &mut dyn FnMut(Range<f32>) -> f32,
+        mut rnd: &mut dyn FnMut(Range<f64>) -> f64,
         _ray: &crate::ray::Ray,
         hit: &crate::hittable::HitRecord,
     ) -> Option<ScatterResult> {

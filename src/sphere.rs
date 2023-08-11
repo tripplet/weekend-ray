@@ -5,15 +5,15 @@ use crate::{
     vec3d::Vec3d,
 };
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Sphere {
     pub origin: Vec3d,
-    pub radius: f32,
+    pub radius: f64,
     pub material: MaterialConfig,
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.origin;
 
         let a = ray.direction.length_squared();
@@ -28,9 +28,9 @@ impl Hittable for Sphere {
         // Find the nearest root that lies in the acceptable range.
         let sqrtd = discriminant.sqrt();
         let mut root = (-half_b - sqrtd) / a;
-        if root < t_min || t_max < root {
+        if root < t_min || t_max <= root {
             root = (-half_b + sqrtd) / a;
-            if root < t_min || t_max < root {
+            if root <= t_min || t_max <= root {
                 return None;
             }
         }

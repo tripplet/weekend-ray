@@ -7,7 +7,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'weekend-ray'",
+            "name": "Debug 'input2.json'",
             "cargo": {
                 "args": [
                     "build",
@@ -27,6 +27,32 @@
                 "--depth",
                 "10",
                 "input2.json"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug 'cover'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=weekend-ray",
+                    "--package=weekend-ray"
+                ],
+                "filter": {
+                    "name": "weekend-ray",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "--width",
+                "320",
+                "--samples-per-pixel",
+                "10",
+                "--depth",
+                "10",
+                "cover"
             ],
             "cwd": "${workspaceFolder}"
         },

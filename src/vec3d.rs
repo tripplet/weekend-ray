@@ -2,11 +2,11 @@ use std::ops::{Neg, Range};
 
 use auto_ops::impl_op_ex;
 
-#[derive(Copy, Clone, serde::Deserialize)]
+#[derive(Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Vec3d {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl_op_ex!(+ #[inline] |a: &Vec3d, b: &Vec3d| -> Vec3d { Vec3d {
@@ -57,7 +57,7 @@ impl_op_ex!(*= #[inline] |a: &mut Vec3d, b: &Vec3d| {
 
 impl_op_ex!(
     *#[inline]
-    |a: &Vec3d, b: f32| -> Vec3d {
+    |a: &Vec3d, b: f64| -> Vec3d {
         Vec3d {
             x: a.x * b,
             y: a.y * b,
@@ -68,7 +68,7 @@ impl_op_ex!(
 
 impl_op_ex!(
     *#[inline]
-    |b: f32, a: &Vec3d| -> Vec3d {
+    |b: f64, a: &Vec3d| -> Vec3d {
         Vec3d {
             x: a.x * b,
             y: a.y * b,
@@ -77,19 +77,19 @@ impl_op_ex!(
     }
 );
 
-impl_op_ex!(*= #[inline] |a: &mut Vec3d, b: f32| {
+impl_op_ex!(*= #[inline] |a: &mut Vec3d, b: f64| {
     a.x *= b;
     a.y *= b;
     a.z *= b;
 });
 
-impl_op_ex!(/ #[inline] |a: &Vec3d, b: f32| -> Vec3d { Vec3d {
+impl_op_ex!(/ #[inline] |a: &Vec3d, b: f64| -> Vec3d { Vec3d {
     x: a.x / b,
     y: a.y / b,
     z: a.z / b,
 }});
 
-impl_op_ex!(/= #[inline] |a: &mut Vec3d, b: f32| {
+impl_op_ex!(/= #[inline] |a: &mut Vec3d, b: f64| {
     a.x /= b;
     a.y /= b;
     a.z /= b;
@@ -140,11 +140,11 @@ macro_rules! v3d_zero {
 }
 
 impl Vec3d {
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
@@ -156,7 +156,7 @@ impl Vec3d {
         }
     }
 
-    pub fn dot(&self, rhs: &Self) -> f32 {
+    pub fn dot(&self, rhs: &Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
@@ -174,7 +174,7 @@ impl Vec3d {
         v3d!(rng.gen(), rng.gen(), rng.gen())
     }
 
-    pub fn random_range(mut rng: impl rand::Rng, min: f32, max: f32) -> Self {
+    pub fn random_range(mut rng: impl rand::Rng, min: f64, max: f64) -> Self {
         v3d!(
             rng.gen_range(min..max),
             rng.gen_range(min..max),
@@ -187,8 +187,8 @@ impl Vec3d {
     /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
     /// https://mathworld.wolfram.com/SpherePointPicking.html
     pub fn random_in_unit_circle(rng: &mut impl rand::Rng) -> Self {
-        let x: f32 = rng.gen_range(-1.0..1.0);
-        let y: f32 = rng.gen_range(-1.0..1.0);
+        let x: f64 = rng.gen_range(-1.0..1.0);
+        let y: f64 = rng.gen_range(-1.0..1.0);
 
         let factor = 1.0 / (x * x + y * y).sqrt();
         v3d!(x * factor, y * factor, 0.0)
@@ -199,9 +199,9 @@ impl Vec3d {
     /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
     /// https://mathworld.wolfram.com/SpherePointPicking.html
     pub fn random_unit_vector(rng: &mut impl rand::Rng) -> Self {
-        let x: f32 = rng.gen_range(-1.0..1.0);
-        let y: f32 = rng.gen_range(-1.0..1.0);
-        let z: f32 = rng.gen_range(-1.0..1.0);
+        let x: f64 = rng.gen_range(-1.0..1.0);
+        let y: f64 = rng.gen_range(-1.0..1.0);
+        let z: f64 = rng.gen_range(-1.0..1.0);
 
         let factor = 1.0 / (x * x + y * y + z * z).sqrt();
         v3d!(x * factor, y * factor, z * factor)
@@ -211,10 +211,10 @@ impl Vec3d {
     ///
     /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
     /// https://mathworld.wolfram.com/SpherePointPicking.html
-    pub fn random_unit_vector_rng_fn(rng: &mut dyn FnMut(Range<f32>) -> f32) -> Self {
-        let x: f32 = rng(-1.0..1.0);
-        let y: f32 = rng(-1.0..1.0);
-        let z: f32 = rng(-1.0..1.0);
+    pub fn random_unit_vector_rng_fn(rng: &mut dyn FnMut(Range<f64>) -> f64) -> Self {
+        let x: f64 = rng(-1.0..1.0);
+        let y: f64 = rng(-1.0..1.0);
+        let z: f64 = rng(-1.0..1.0);
 
         let factor = 1.0 / (x * x + y * y + z * z).sqrt();
         v3d!(x * factor, y * factor, z * factor)
@@ -235,14 +235,14 @@ impl Vec3d {
 mod tests {
     use super::*;
     use approx::*;
-    use rand::{rngs::SmallRng, SeedableRng};
+    use rand::{rngs::SmallRng, SeedableRng, Rng};
 
     #[test]
     fn test_random_in_unit_sphere() {
         assert_relative_eq!(
             1.0,
             Vec3d::random_unit_vector(&mut rand::thread_rng()).length(),
-            epsilon = 2.0 * f32::EPSILON
+            epsilon = 2.0 * f64::EPSILON
         );
     }
 
@@ -253,7 +253,21 @@ mod tests {
         assert_relative_eq!(
             1.0,
             Vec3d::random_in_unit_circle(&mut rng).length(),
-            epsilon = 2.0 * f32::EPSILON
+            epsilon = 2.0 * f64::EPSILON
+        );
+    }
+
+
+    #[test]
+    fn test_random_unit_vector_rng_fn() {
+        let mut rng = SmallRng::from_entropy();
+
+        let mut rng_func = |range| rng.gen_range(range);
+
+        assert_relative_eq!(
+            1.0,
+            Vec3d::random_unit_vector_rng_fn(&mut rng_func).length(),
+            epsilon = 2.0 * f64::EPSILON
         );
     }
 }

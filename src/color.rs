@@ -12,10 +12,10 @@ macro_rules! color {
 }
 
 pub fn random(rng: &mut impl rand::Rng) -> Color {
-    color!(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
+    color!(rng.gen::<f64>(), rng.gen::<f64>(), rng.gen::<f64>())
 }
 
-pub fn random_range(rng: &mut impl rand::Rng, range: Range<f32>) -> Color {
+pub fn random_range(rng: &mut impl rand::Rng, range: Range<f64>) -> Color {
     color!(
         rng.gen_range(range.clone()),
         rng.gen_range(range.clone()),

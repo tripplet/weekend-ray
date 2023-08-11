@@ -22,8 +22,8 @@ pub struct Camera {
     // Rendered image height in pixel count
     pub image_height: u16,
 
-    pub viewport_width: f32,
-    pub viewport_height: f32,
+    pub viewport_width: f64,
+    pub viewport_height: f64,
 
     /// Number of random samples for each pixel
     pub samples_per_pixel: u16,
@@ -44,7 +44,7 @@ pub struct Camera {
     defocus_disk_v: Vec3d,
 }
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct CameraConfig {
     /// Point camera is looking from
     pub look_from: Vec3d,
@@ -56,16 +56,16 @@ pub struct CameraConfig {
     pub vup: Vec3d,
 
     /// Vertical field-of-view in degrees
-    pub vfov: f32,
+    pub vfov: f64,
 
     /// Ratio of image width over height
-    pub aspect_ratio: f32,
+    pub aspect_ratio: f64,
 
     /// Variation angle of rays through each pixel
-    pub defocus_angle: f32,
+    pub defocus_angle: f64,
 
     /// Distance from camera `look_from` point to plane of perfect focus
-    pub focus_dist: f32,
+    pub focus_dist: f64,
 }
 
 impl Camera {
@@ -74,7 +74,7 @@ impl Camera {
         let theta = cfg.vfov.to_radians();
         let viewport_height = (theta / 2.0).tan() * 2.0 * cfg.focus_dist;
         let viewport_width = viewport_height * cfg.aspect_ratio;
-        let image_height = (image_width as f32 / cfg.aspect_ratio) as u16;
+        let image_height = (image_width as f64 / cfg.aspect_ratio) as u16;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
         let w = (cfg.look_from - cfg.look_at).unit_vector();
@@ -86,8 +86,8 @@ impl Camera {
         let viewport_v = -v * viewport_height;
 
         // Calculate the horizontal and vertical delta vectors to the next pixel.
-        let pixel_delta_u = viewport_u / image_width as f32;
-        let pixel_delta_v = viewport_v / image_height as f32;
+        let pixel_delta_u = viewport_u / image_width as f64;
+        let pixel_delta_v = viewport_v / image_height as f64;
 
         let viewport_upper_left = cfg.look_from - (cfg.focus_dist * w) - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
@@ -136,7 +136,7 @@ impl Camera {
     }
 
     fn render_line(&self, h: u16, line: &mut [Vec3d], objects: &Vec<Sphere>, mut thread_rng: &mut impl rand::Rng) {
-        let scale = 1.0 / self.samples_per_pixel as f32;
+        let scale = 1.0 / self.samples_per_pixel as f64;
 
         for w in 0..self.image_width {
             let mut color = v3d_zero!();
@@ -144,7 +144,7 @@ impl Camera {
             // Get a randomly-sampled camera ray for the pixel at location i,j, originating from
             // the camera defocus disk.
             for _ in 0..self.samples_per_pixel {
-                let pixel_center = self.pixel00_loc + (w as f32 * self.pixel_delta_u) + (h as f32 * self.pixel_delta_v);
+                let pixel_center = self.pixel00_loc + (w as f64 * self.pixel_delta_u) + (h as f64 * self.pixel_delta_v);
                 let pixel_sample = pixel_center + self.pixel_sample_square(&mut thread_rng);
 
                 let camera_origin = if self.cfg.defocus_angle <= 0.0 {
@@ -178,9 +178,9 @@ impl Camera {
             return color!(0.0, 0.0, 0.0);
         }
 
-        let mut rng_func = |range: Range<f32>| rng.gen_range(range);
+        let mut rng_func = |range: Range<f64>| rng.gen_range(range);
 
-        if let Some(hit) = world.hit(ray, 0.0001, f32::INFINITY) {
+        if let Some(hit) = world.hit(ray, 0.0001, f64::INFINITY) {
             if let Some(scatter) = hit.material.scatter(&mut rng_func, ray, &hit) {
                 return scatter.attenuation * Camera::ray_color(&scatter.ray, depth - 1, rng, world);
             }
@@ -204,11 +204,11 @@ impl Camera {
     /// Returns a random point in the square
     #[inline(always)]
     fn pixel_sample_square(&self, rng: &mut impl rand::Rng) -> Vec3d {
-        (rng.gen_range(0.0..0.5) * self.pixel_delta_u) + (rng.gen_range(0.0..0.5) * self.pixel_delta_v)
+        ((-0.5 + rng.gen::<f64>()) * self.pixel_delta_u) + ((-0.5 + rng.gen::<f64>()) * self.pixel_delta_v)
     }
 
     #[inline(always)]
-    fn linear_to_gamma(linear_value: f32) -> f32 {
+    fn linear_to_gamma(linear_value: f64) -> f64 {
         linear_value.sqrt()
     }
 }

@@ -6,6 +6,8 @@ use std::{
 
 use camera::{Camera, CameraConfig};
 use clap::{Parser, Subcommand};
+use hittable::Hittable;
+use ray::Ray;
 use material::{dielectric::Dielectric, lamertian::Lambertian, metal::Metal};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use vec3d::Vec3d;
@@ -37,14 +39,20 @@ struct Config {
 
 #[derive(Subcommand)]
 enum InputFormat {
-    Random,
+    /// Generate the book cover scene input data
+    Cover {
+        #[arg()]
+        file_path: String,
+    },
+
+    /// Use the file as input data
     File {
         #[arg()]
         file_path: String,
     },
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct InputData {
     camera: CameraConfig,
     objects: Vec<sphere::Sphere>,
@@ -54,7 +62,10 @@ fn main() {
     let cfg = Config::parse(); // Parse arguments
 
     let input: InputData = match cfg.command {
-        InputFormat::Random => generate_random_demo_scene(),
+        InputFormat::Cover { file_path } => {
+            generate_random_cover_scene(&file_path);
+            return;
+        }
         InputFormat::File { file_path } => {
             serde_json::from_str(&fs::read_to_string(file_path).expect("Unable to read input file")).unwrap()
         }
@@ -71,13 +82,13 @@ fn main() {
     let img = camera.render(&input.objects);
     println!("Rendering took {}\n", humantime::format_duration(now.elapsed()));
 
-    let image_height = (image_width as f32 / camera.cfg.aspect_ratio) as usize;
+    let image_height = (image_width as f64 / camera.cfg.aspect_ratio) as usize;
 
     // write_ppm("image.ppm", image_width as usize, image_height, &img);
     write_png("image.png", image_width as usize, image_height, &img);
 }
 
-fn generate_random_demo_scene() -> InputData {
+fn generate_random_cover_scene(file_path: &str) {
     let mut world = vec![];
 
     let ground_material = Lambertian {
@@ -94,12 +105,21 @@ fn generate_random_demo_scene() -> InputData {
 
     for a in -11..11 {
         for b in -11..11 {
-            let choose_mat = rng.gen::<f32>();
-            let center = v3d!(
-                a as f32 + 0.9 * rng.gen::<f32>(),
+            let choose_mat = rng.gen::<f64>();
+            let mut center = v3d!(
+                a as f64 + 0.9 * rng.gen::<f64>(),
                 0.2,
-                b as f32 + 0.9 * rng.gen::<f32>()
+                b as f64 + 0.9 * rng.gen::<f64>()
             );
+
+            // Find the point where the spheres hit the ground
+            // to put them directly on the ground (no hovering)
+            let intersection = world[0].hit(&Ray {
+                origin: center,
+                direction: world[0].origin - center,
+            }, 0.0, f64::INFINITY).unwrap();
+
+            center = intersection.point + intersection.normal * 0.2;
 
             if (center - v3d!(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
@@ -179,10 +199,15 @@ fn generate_random_demo_scene() -> InputData {
         focus_dist: 10.0,
     };
 
-    InputData {
+    let data = InputData {
         camera: cam,
         objects: world,
-    }
+    };
+
+    let path = Path::new(file_path);
+    let file = File::create(path).unwrap();
+    let w = &mut BufWriter::new(file);
+    serde_json::to_writer(w, &data);
 }
 
 fn write_png(file_path: &str, image_width: usize, image_height: usize, pixels: &[Vec3d]) {

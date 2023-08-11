@@ -11,7 +11,7 @@ use lamertian::Lambertian;
 use metal::Metal;
 
 pub trait Material: Send + Sync {
-    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult>;
+    fn scatter(&self, rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult>;
 }
 
 pub struct ScatterResult {
@@ -19,7 +19,7 @@ pub struct ScatterResult {
     pub attenuation: Color,
 }
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub enum MaterialConfig {
     Lambertian(Lambertian),
     Metal(Metal),
@@ -28,7 +28,7 @@ pub enum MaterialConfig {
 
 impl Material for MaterialConfig {
     #[inline]
-    fn scatter(&self, rnd: &mut dyn FnMut(Range<f32>) -> f32, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult> {
+    fn scatter(&self, rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult> {
         match &self {
             MaterialConfig::Lambertian(m) => m.scatter(rnd, ray, hit),
             MaterialConfig::Metal(m) => m.scatter(rnd, ray, hit),
