@@ -186,6 +186,18 @@ impl Vec3d {
     ///
     /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
     /// https://mathworld.wolfram.com/SpherePointPicking.html
+    pub fn random_in_unit_circle(rng: &mut impl rand::Rng) -> Self {
+        let x: f32 = rng.gen_range(-1.0..1.0);
+        let y: f32 = rng.gen_range(-1.0..1.0);
+
+        let factor = 1.0 / (x * x + y * y).sqrt();
+        v3d!(x * factor, y * factor, 0.0)
+    }
+
+    /// Generate a vector to a point on the unit circle
+    ///
+    /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
+    /// https://mathworld.wolfram.com/SpherePointPicking.html
     pub fn random_unit_vector(rng: &mut impl rand::Rng) -> Self {
         let x: f32 = rng.gen_range(-1.0..1.0);
         let y: f32 = rng.gen_range(-1.0..1.0);
@@ -195,7 +207,11 @@ impl Vec3d {
         v3d!(x * factor, y * factor, z * factor)
     }
 
-    pub fn random_unit_vector2(rng: &mut dyn FnMut(Range<f32>) -> f32) -> Self {
+    /// Generate a vector to a point on the unit circle
+    ///
+    /// https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
+    /// https://mathworld.wolfram.com/SpherePointPicking.html
+    pub fn random_unit_vector_rng_fn(rng: &mut dyn FnMut(Range<f32>) -> f32) -> Self {
         let x: f32 = rng(-1.0..1.0);
         let y: f32 = rng(-1.0..1.0);
         let z: f32 = rng(-1.0..1.0);
@@ -219,12 +235,24 @@ impl Vec3d {
 mod tests {
     use super::*;
     use approx::*;
+    use rand::{rngs::SmallRng, SeedableRng};
 
     #[test]
     fn test_random_in_unit_sphere() {
         assert_relative_eq!(
             1.0,
             Vec3d::random_unit_vector(&mut rand::thread_rng()).length(),
+            epsilon = 2.0 * f32::EPSILON
+        );
+    }
+
+    #[test]
+    fn test_random_in_unit_circle() {
+        let mut rng = SmallRng::from_entropy();
+
+        assert_relative_eq!(
+            1.0,
+            Vec3d::random_in_unit_circle(&mut rng).length(),
             epsilon = 2.0 * f32::EPSILON
         );
     }

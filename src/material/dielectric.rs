@@ -6,7 +6,7 @@ use super::{Material, ScatterResult};
 
 #[derive(Clone, serde::Deserialize)]
 pub struct Dielectric {
-    index_of_refraction: f32,
+    pub index_of_refraction: f32,
 }
 
 impl Material for Dielectric {

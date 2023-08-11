@@ -16,7 +16,9 @@
             "z": 0.0
         },
         "vfov": 60,
-        "aspect_ratio": 1.77777
+        "aspect_ratio": 1.77777,
+        "defocus_angle": 0,
+        "focus_dist": 10
     },
     "objects": [
         {

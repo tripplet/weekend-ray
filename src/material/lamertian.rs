@@ -16,7 +16,7 @@ impl Material for Lambertian {
         _ray: &crate::ray::Ray,
         hit: &crate::hittable::HitRecord,
     ) -> Option<ScatterResult> {
-        let mut scatter_direction = hit.normal + Vec3d::random_unit_vector2(&mut rnd);
+        let mut scatter_direction = hit.normal + Vec3d::random_unit_vector_rng_fn(&mut rnd);
 
         // Catch degenerate scatter direction
         if scatter_direction.is_near_zero() {

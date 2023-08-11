@@ -6,8 +6,8 @@ use super::{Material, ScatterResult};
 
 #[derive(Clone, serde::Deserialize)]
 pub struct Metal {
-    albedo: Color,
-    fuzz: f32,
+    pub albedo: Color,
+    pub fuzz: f32,
 }
 
 impl Material for Metal {
@@ -20,7 +20,7 @@ impl Material for Metal {
         let reflected = reflect(&ray.direction.unit_vector(), &hit.normal);
         let scattered = Ray {
             origin: hit.point,
-            direction: reflected + self.fuzz * Vec3d::random_unit_vector2(&mut rnd),
+            direction: reflected + self.fuzz * Vec3d::random_unit_vector_rng_fn(&mut rnd),
         };
 
         if scattered.direction.dot(&hit.normal) > 0.0 {

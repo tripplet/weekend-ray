@@ -9,6 +9,7 @@ edition = "2021"
 auto_ops = { git = "https://github.com/carbotaniuman/auto_ops", rev = "74d97b4" }
 clap = { version = "4.3.19", features = ["derive"] }
 humantime = "2.1.0"
+indicatif = { version = "0.17.6", features = ["rayon"] }
 png = "0.17.9"
 rand = { version = "0.8.5", features = ["small_rng"] }
 rayon = "1.7.0"

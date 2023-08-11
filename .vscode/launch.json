@@ -19,7 +19,15 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "--width",
+                "320",
+                "--samples-per-pixel",
+                "10",
+                "--depth",
+                "10",
+                "input2.json"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
