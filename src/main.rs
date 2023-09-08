@@ -1,3 +1,4 @@
+use core::{Hittable, Ray, Vec3d};
 use std::{
     fs::{self, File},
     io::BufWriter,
@@ -6,23 +7,17 @@ use std::{
 
 use camera::{Camera, CameraConfig};
 use clap::{Parser, Subcommand};
-use hittable::Hittable;
+use gemeometry::Sphere;
 use material::{Dielectric, Lambertian, Metal};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use ray::Ray;
-use vec3d::Vec3d;
 
 use crate::acceleration::BvhNode;
 
 mod acceleration;
 mod camera;
-mod color;
-mod hittable;
+mod core;
+mod gemeometry;
 mod material;
-mod ray;
-mod sphere;
-mod vec3d;
-mod world;
 
 #[derive(Parser)]
 #[command(version)]
@@ -69,7 +64,7 @@ struct RenderOptions {
 #[derive(serde::Serialize, serde::Deserialize)]
 struct InputData {
     camera: CameraConfig,
-    objects: Vec<sphere::Sphere>,
+    objects: Vec<Sphere>,
 }
 
 fn main() {
@@ -120,7 +115,7 @@ fn generate_random_cover_scene(file_path: &str) {
         albedo: color!(0.5, 0.5, 0.5),
     };
 
-    world.push(sphere::Sphere::new(
+    world.push(Sphere::new(
         v3d!(0.0, -1000.0, 0.0),
         1000.0,
         material::MaterialConfig::Lambertian(ground_material),
@@ -159,27 +154,27 @@ fn generate_random_cover_scene(file_path: &str) {
 
                     let center2 = center + v3d!(0.0, rng.gen_range(0.0..0.5), 0.0);
 
-                    world.push(sphere::Sphere::new_moving(
+                    world.push(Sphere::new_moving(
                         center,
                         center2,
                         0.2,
                         material::MaterialConfig::Lambertian(Lambertian {
-                            albedo: color::random(&mut rng) * color::random(&mut rng),
+                            albedo: core::color::random(&mut rng) * core::color::random(&mut rng),
                         }),
                     ));
                 } else if choose_mat < 0.95 {
                     // metal
-                    world.push(sphere::Sphere::new(
+                    world.push(Sphere::new(
                         center,
                         0.2,
                         material::MaterialConfig::Metal(Metal {
                             fuzz: rng.gen_range(0.0..0.5),
-                            albedo: color::random_range(&mut rng, 0.5..1.0) * color::random(&mut rng),
+                            albedo: core::color::random_range(&mut rng, 0.5..1.0) * core::color::random(&mut rng),
                         }),
                     ));
                 } else {
                     // glass
-                    world.push(sphere::Sphere::new(
+                    world.push(Sphere::new(
                         center,
                         0.2,
                         material::MaterialConfig::Dielectric(Dielectric {
@@ -191,7 +186,7 @@ fn generate_random_cover_scene(file_path: &str) {
         }
     }
 
-    world.push(sphere::Sphere::new(
+    world.push(Sphere::new(
         v3d!(0.0, 1.0, 0.0),
         1.0,
         material::MaterialConfig::Dielectric(Dielectric {
@@ -199,7 +194,7 @@ fn generate_random_cover_scene(file_path: &str) {
         }),
     ));
 
-    world.push(sphere::Sphere::new(
+    world.push(Sphere::new(
         v3d!(-4.0, 1.0, 0.0),
         1.0,
         material::MaterialConfig::Lambertian(Lambertian {
@@ -207,7 +202,7 @@ fn generate_random_cover_scene(file_path: &str) {
         }),
     ));
 
-    world.push(sphere::Sphere::new(
+    world.push(Sphere::new(
         v3d!(-4.0, 1.0, 0.0),
         1.0,
         material::MaterialConfig::Lambertian(Lambertian {
@@ -215,7 +210,7 @@ fn generate_random_cover_scene(file_path: &str) {
         }),
     ));
 
-    world.push(sphere::Sphere::new(
+    world.push(Sphere::new(
         v3d!(4.0, 1.0, 0.0),
         1.0,
         material::MaterialConfig::Metal(Metal {

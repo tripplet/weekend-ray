@@ -3,7 +3,7 @@ use std::sync::Arc;
 use rand::Rng;
 
 use super::Aabb;
-use crate::hittable::Hittable;
+use crate::core::{HitRecord, Hittable, Ray};
 
 /// Bounding volume hierarchy node
 #[derive(Clone)]
@@ -51,7 +51,7 @@ impl<'a> BvhNode<'a> {
 }
 
 impl<'a> Hittable for BvhNode<'a> {
-    fn hit(&self, ray: &crate::ray::Ray, t_min: f64, t_max: f64) -> Option<crate::hittable::HitRecord> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if !self.bounding_box.hit(ray, t_min..t_max) {
             return None;
         }

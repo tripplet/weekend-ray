@@ -134,14 +134,14 @@ impl Default for Vec3d {
 #[macro_export]
 macro_rules! v3d {
     ($x:expr, $y:expr, $z:expr) => {
-        $crate::vec3d::Vec3d { x: $x, y: $y, z: $z }
+        $crate::core::Vec3d { x: $x, y: $y, z: $z }
     };
 }
 
 #[macro_export]
 macro_rules! v3d_zero {
     () => {
-        $crate::vec3d::Vec3d::default()
+        $crate::core::Vec3d::default()
     };
 }
 

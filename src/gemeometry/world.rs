@@ -1,9 +1,13 @@
 use std::borrow::Cow;
 
-use crate::{acceleration::Aabb, hittable::Hittable, sphere::Sphere};
+use crate::{
+    acceleration::Aabb,
+    core::{HitRecord, Hittable, Ray},
+    gemeometry::Sphere,
+};
 
 impl Hittable for Vec<Sphere> {
-    fn hit<'a>(&'a self, ray: &crate::ray::Ray, t_min: f64, t_max: f64) -> Option<crate::hittable::HitRecord<'a>> {
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
         let mut hit = None;
         let mut closest_so_far = t_max;
 

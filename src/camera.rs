@@ -4,13 +4,10 @@ use indicatif::{ParallelProgressIterator, ProgressBar, ProgressDrawTarget, Progr
 use rand::prelude::*;
 use rayon::prelude::*;
 
-use crate::color::Color;
-use crate::hittable::Hittable;
+use crate::core::{Color, Hittable, Ray, Vec3d};
 use crate::{color, v3d_zero};
 
 use crate::material::Material;
-use crate::ray::Ray;
-use crate::vec3d::Vec3d;
 
 #[derive(serde::Deserialize)]
 pub struct Camera {

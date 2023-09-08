@@ -2,11 +2,9 @@ use std::{borrow::Cow, sync::OnceLock};
 
 use crate::{
     acceleration::Aabb,
-    hittable::{HitRecord, Hittable},
+    core::{HitRecord, Hittable, Ray, Vec3d},
     material::MaterialConfig,
-    ray::Ray,
     v3d,
-    vec3d::Vec3d,
 };
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]

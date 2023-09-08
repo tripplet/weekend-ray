@@ -1,6 +1,5 @@
 use crate::color;
-use crate::ray::Ray;
-use crate::vec3d::Vec3d;
+use crate::core::{HitRecord, Ray, Vec3d};
 
 use super::{Material, ScatterResult};
 
@@ -13,8 +12,8 @@ impl Material for Dielectric {
     fn scatter(
         &self,
         rnd: &mut dyn FnMut(std::ops::Range<f64>) -> f64,
-        ray: &crate::ray::Ray,
-        hit: &crate::hittable::HitRecord,
+        ray: &Ray,
+        hit: &HitRecord,
     ) -> Option<ScatterResult> {
         let refraction_ratio = if hit.front_face {
             1.0 / self.index_of_refraction

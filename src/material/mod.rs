@@ -8,7 +8,7 @@ pub use metal::Metal;
 
 use std::ops::Range;
 
-use crate::{color::Color, hittable::HitRecord, ray::Ray};
+use crate::core::{Color, HitRecord, Ray};
 
 pub trait Material: Send + Sync {
     fn scatter(&self, rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult>;
@@ -19,6 +19,7 @@ pub struct ScatterResult {
     pub attenuation: Color,
 }
 
+#[non_exhaustive]
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub enum MaterialConfig {
     Lambertian(Lambertian),

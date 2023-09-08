@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{acceleration::Aabb, material::MaterialConfig, ray::Ray, vec3d::Vec3d};
+use crate::{acceleration::Aabb, core::Ray, core::Vec3d, material::MaterialConfig};
 
 pub struct HitRecord<'mat> {
     pub point: Vec3d,

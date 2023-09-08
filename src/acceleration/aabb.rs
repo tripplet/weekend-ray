@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::{ray::Ray, vec3d::Vec3d};
+use crate::core::{Ray, Vec3d};
 
 /// Access aligned bounding box
 #[derive(Clone)]

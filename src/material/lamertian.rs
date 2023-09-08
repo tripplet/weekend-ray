@@ -1,6 +1,9 @@
 use std::ops::Range;
 
-use crate::{color::Color, ray::Ray, vec3d::Vec3d};
+use crate::{
+    core::Color,
+    core::{HitRecord, Ray, Vec3d},
+};
 
 use super::{Material, ScatterResult};
 
@@ -10,12 +13,7 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(
-        &self,
-        mut rnd: &mut dyn FnMut(Range<f64>) -> f64,
-        ray: &crate::ray::Ray,
-        hit: &crate::hittable::HitRecord,
-    ) -> Option<ScatterResult> {
+    fn scatter(&self, mut rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult> {
         let mut scatter_direction = hit.normal + Vec3d::random_unit_vector_rng_fn(&mut rnd);
 
         // Catch degenerate scatter direction

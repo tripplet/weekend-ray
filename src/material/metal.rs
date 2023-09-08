@@ -1,6 +1,8 @@
 use std::ops::Range;
 
-use crate::{color::Color, ray::Ray, vec3d::Vec3d};
+use crate::core::{
+    Color, Vec3d, {HitRecord, Ray},
+};
 
 use super::{Material, ScatterResult};
 
@@ -11,12 +13,7 @@ pub struct Metal {
 }
 
 impl Material for Metal {
-    fn scatter(
-        &self,
-        mut rnd: &mut dyn FnMut(Range<f64>) -> f64,
-        ray: &crate::ray::Ray,
-        hit: &crate::hittable::HitRecord,
-    ) -> Option<ScatterResult> {
+    fn scatter(&self, mut rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult> {
         let reflected = reflect(&ray.direction.unit_vector(), &hit.normal);
         let scattered = Ray {
             origin: hit.point,
