@@ -1,15 +1,33 @@
+use std::{borrow::Cow, sync::OnceLock};
+
 use crate::{
+    acceleration::Aabb,
     hittable::{HitRecord, Hittable},
     material::MaterialConfig,
     ray::Ray,
+    v3d,
     vec3d::Vec3d,
 };
 
-#[derive(serde::Serialize, serde::Deserialize)]
+impl Sphere {
+    pub fn new(origin: Vec3d, radius: f64, material: MaterialConfig) -> Self {
+        Sphere {
+            origin,
+            radius,
+            material,
+            bounding_box: OnceLock::new(),
+        }
+    }
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Sphere {
     pub origin: Vec3d,
     pub radius: f64,
     pub material: MaterialConfig,
+
+    #[serde(skip)]
+    bounding_box: OnceLock<Aabb>,
 }
 
 impl Hittable for Sphere {
@@ -48,5 +66,12 @@ impl Hittable for Sphere {
         rec.set_normal_face(ray, &rec.normal.clone());
 
         Some(rec)
+    }
+
+    fn bounding_box(&self) -> Cow<crate::acceleration::Aabb> {
+        Cow::Borrowed(self.bounding_box.get_or_init(|| {
+            let rvec = v3d!(self.radius.abs(), self.radius.abs(), self.radius.abs());
+            Aabb::from_points(&(self.origin - rvec), &(self.origin + rvec))
+        }))
     }
 }

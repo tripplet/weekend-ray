@@ -26,7 +26,8 @@
                 "10",
                 "--depth",
                 "10",
-                "input2.json"
+                "file",
+                "scenes/input2.json"
             ],
             "cwd": "${workspaceFolder}"
         },

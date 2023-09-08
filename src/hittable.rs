@@ -1,4 +1,6 @@
-use crate::{material::MaterialConfig, ray::Ray, vec3d::Vec3d};
+use std::borrow::Cow;
+
+use crate::{acceleration::Aabb, material::MaterialConfig, ray::Ray, vec3d::Vec3d};
 
 pub struct HitRecord<'mat> {
     pub point: Vec3d,
@@ -10,6 +12,7 @@ pub struct HitRecord<'mat> {
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+    fn bounding_box(&self) -> Cow<Aabb>;
 }
 
 impl<'mat> HitRecord<'mat> {

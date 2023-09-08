@@ -1,15 +1,15 @@
 use std::ops::Range;
 
-use indicatif::{ParallelProgressIterator, ProgressStyle};
+use indicatif::{ParallelProgressIterator, ProgressStyle, ProgressBar, ProgressDrawTarget};
 use rand::prelude::*;
 use rayon::prelude::*;
 
 use crate::color::Color;
+use crate::hittable::Hittable;
 use crate::{color, v3d_zero};
 
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::sphere::Sphere;
 use crate::vec3d::Vec3d;
 
 #[derive(serde::Deserialize)]
@@ -113,29 +113,36 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, objects: &Vec<Sphere>) -> Vec<Color> {
+    /// Render the given `objects`
+    pub fn render(&self, objects: &(impl Hittable + Sync), quiet: bool) -> Vec<Color> {
         let mut img = vec![v3d_zero!(); self.image_height as usize * self.image_width as usize];
 
         let sty = ProgressStyle::with_template("[{elapsed_precise}] {bar:60.cyan/blue} {pos:>7}/{len:7} {msg}")
             .unwrap()
             .progress_chars("##-");
 
+        let p = ProgressBar::new(self.image_width as u64);
+
+        if quiet {
+            p.set_draw_target(ProgressDrawTarget::hidden());
+        }
+
+        let p = p.with_style(sty);
+
         // - Slice the img array into lines for parallel rendering
         // - Create a big, expensive to initialize and slower, but unpredictable RNG.
         //   This is cached and done only once per thread / rayon job.
         img.par_chunks_mut(self.image_width as usize)
-            .progress_count(self.image_height as u64)
-            .with_style(sty)
+            .progress_with(p)
             .enumerate()
-            .for_each_init(
-                SmallRng::from_entropy,
-                |rng, (h, line)| self.render_line(h as u16, line, objects, rng),
-            );
+            .for_each_init(SmallRng::from_entropy, |rng, (h, line)| {
+                self.render_line(h as u16, line, objects, rng)
+            });
 
         img
     }
 
-    fn render_line(&self, h: u16, line: &mut [Vec3d], objects: &Vec<Sphere>, mut thread_rng: &mut impl rand::Rng) {
+    fn render_line(&self, h: u16, line: &mut [Vec3d], objects: &impl Hittable, mut thread_rng: &mut impl rand::Rng) {
         let scale = 1.0 / self.samples_per_pixel as f64;
 
         for w in 0..self.image_width {
@@ -170,9 +177,7 @@ impl Camera {
     }
 
     #[inline(always)]
-    fn ray_color(ray: &Ray, depth: u16, rng: &mut impl rand::Rng, world: &Vec<Sphere>) -> Color {
-        use crate::hittable::Hittable;
-
+    fn ray_color(ray: &Ray, depth: u16, rng: &mut impl rand::Rng, world: &impl Hittable) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth == 0 {
             return color!(0.0, 0.0, 0.0);

@@ -1,14 +1,14 @@
-pub mod dielectric;
-pub mod lamertian;
-pub mod metal;
+mod dielectric;
+mod lamertian;
+mod metal;
+
+pub use dielectric::Dielectric;
+pub use lamertian::Lambertian;
+pub use metal::Metal;
 
 use std::ops::Range;
 
 use crate::{color::Color, hittable::HitRecord, ray::Ray};
-
-use dielectric::Dielectric;
-use lamertian::Lambertian;
-use metal::Metal;
 
 pub trait Material: Send + Sync {
     fn scatter(&self, rnd: &mut dyn FnMut(Range<f64>) -> f64, ray: &Ray, hit: &HitRecord) -> Option<ScatterResult>;

@@ -7,11 +7,14 @@ use std::{
 use camera::{Camera, CameraConfig};
 use clap::{Parser, Subcommand};
 use hittable::Hittable;
-use ray::Ray;
-use material::{dielectric::Dielectric, lamertian::Lambertian, metal::Metal};
+use material::{Dielectric, Lambertian, Metal};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
+use ray::Ray;
 use vec3d::Vec3d;
 
+use crate::acceleration::BvhNode;
+
+mod acceleration;
 mod camera;
 mod color;
 mod hittable;
@@ -32,6 +35,14 @@ struct Config {
 
     #[arg(long)]
     depth: u16,
+
+    /// Don't show any progress or measured times
+    #[arg(long)]
+    quiet: bool,
+
+    /// Use bounding volume hierarchy as acceleration structure
+    #[arg(long)]
+    use_bvh: bool,
 
     #[arg(short, long, default_value = "100")]
     samples_per_pixel: u16,
@@ -67,20 +78,27 @@ fn main() {
             return;
         }
         InputFormat::File { file_path } => {
+            // Read input file
             serde_json::from_str(&fs::read_to_string(file_path).expect("Unable to read input file")).unwrap()
         }
     };
 
-    // Read input file
+    let start = std::time::Instant::now();
 
     let image_width = cfg.width;
-
-    let now = std::time::Instant::now();
-
     let camera = Camera::new(&input.camera, image_width, cfg.samples_per_pixel, cfg.depth);
 
-    let img = camera.render(&input.objects);
-    println!("Rendering took {}\n", humantime::format_duration(now.elapsed()));
+    let img = if cfg.use_bvh {
+        let bvh = BvhNode::build(&input.objects.iter().collect::<Vec<_>>());
+        camera.render(&bvh, cfg.quiet)
+    } else {
+        camera.render(&input.objects, cfg.quiet)
+    };
+
+    if !cfg.quiet {
+        println!("Rendering took {}", humantime::format_duration(start.elapsed()));
+    }
+
 
     let image_height = (image_width as f64 / camera.cfg.aspect_ratio) as usize;
 
@@ -95,11 +113,11 @@ fn generate_random_cover_scene(file_path: &str) {
         albedo: color!(0.5, 0.5, 0.5),
     };
 
-    world.push(sphere::Sphere {
-        material: material::MaterialConfig::Lambertian(ground_material),
-        origin: v3d!(0.0, -1000.0, 0.0),
-        radius: 1000.0,
-    });
+    world.push(sphere::Sphere::new(
+        v3d!(0.0, -1000.0, 0.0),
+        1000.0,
+        material::MaterialConfig::Lambertian(ground_material),
+    ));
 
     let mut rng = SmallRng::from_entropy();
 
@@ -114,79 +132,85 @@ fn generate_random_cover_scene(file_path: &str) {
 
             // Find the point where the spheres hit the ground
             // to put them directly on the ground (no hovering)
-            let intersection = world[0].hit(&Ray {
-                origin: center,
-                direction: world[0].origin - center,
-            }, 0.0, f64::INFINITY).unwrap();
+            let intersection = world[0]
+                .hit(
+                    &Ray {
+                        origin: center,
+                        direction: world[0].origin - center,
+                    },
+                    0.0,
+                    f64::INFINITY,
+                )
+                .unwrap();
 
             center = intersection.point + intersection.normal * 0.2;
 
             if (center - v3d!(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     // diffuse
-                    world.push(sphere::Sphere {
-                        material: material::MaterialConfig::Lambertian(Lambertian {
+                    world.push(sphere::Sphere::new(
+                        center,
+                        0.2,
+                        material::MaterialConfig::Lambertian(Lambertian {
                             albedo: color::random(&mut rng) * color::random(&mut rng),
                         }),
-                        origin: center,
-                        radius: 0.2,
-                    });
+                    ));
                 } else if choose_mat < 0.95 {
                     // metal
-                    world.push(sphere::Sphere {
-                        material: material::MaterialConfig::Metal(Metal {
+                    world.push(sphere::Sphere::new(
+                        center,
+                        0.2,
+                        material::MaterialConfig::Metal(Metal {
                             fuzz: rng.gen_range(0.0..0.5),
                             albedo: color::random_range(&mut rng, 0.5..1.0) * color::random(&mut rng),
                         }),
-                        origin: center,
-                        radius: 0.2,
-                    });
+                    ));
                 } else {
                     // glass
-                    world.push(sphere::Sphere {
-                        material: material::MaterialConfig::Dielectric(Dielectric {
+                    world.push(sphere::Sphere::new(
+                        center,
+                        0.2,
+                        material::MaterialConfig::Dielectric(Dielectric {
                             index_of_refraction: 1.5,
                         }),
-                        origin: center,
-                        radius: 0.2,
-                    });
+                    ));
                 }
             }
         }
     }
 
-    world.push(sphere::Sphere {
-        material: material::MaterialConfig::Dielectric(Dielectric {
+    world.push(sphere::Sphere::new(
+        v3d!(0.0, 1.0, 0.0),
+        1.0,
+        material::MaterialConfig::Dielectric(Dielectric {
             index_of_refraction: 1.5,
         }),
-        origin: v3d!(0.0, 1.0, 0.0),
-        radius: 1.0,
-    });
+    ));
 
-    world.push(sphere::Sphere {
-        material: material::MaterialConfig::Lambertian(Lambertian {
+    world.push(sphere::Sphere::new(
+        v3d!(-4.0, 1.0, 0.0),
+        1.0,
+        material::MaterialConfig::Lambertian(Lambertian {
             albedo: color!(0.4, 0.2, 0.1),
         }),
-        origin: v3d!(-4.0, 1.0, 0.0),
-        radius: 1.0,
-    });
+    ));
 
-    world.push(sphere::Sphere {
-        material: material::MaterialConfig::Lambertian(Lambertian {
+    world.push(sphere::Sphere::new(
+        v3d!(-4.0, 1.0, 0.0),
+        1.0,
+        material::MaterialConfig::Lambertian(Lambertian {
             albedo: color!(0.4, 0.2, 0.1),
         }),
-        origin: v3d!(-4.0, 1.0, 0.0),
-        radius: 1.0,
-    });
+    ));
 
-    world.push(sphere::Sphere {
-        material: material::MaterialConfig::Metal(Metal {
+    world.push(sphere::Sphere::new(
+        v3d!(4.0, 1.0, 0.0),
+        1.0,
+        material::MaterialConfig::Metal(Metal {
             fuzz: rng.gen_range(0.0..0.5),
             albedo: color!(0.7, 0.6, 0.5),
         }),
-        origin: v3d!(4.0, 1.0, 0.0),
-        radius: 1.0,
-    });
+    ));
 
     let cam = CameraConfig {
         aspect_ratio: 16.0 / 9.0,
@@ -207,7 +231,7 @@ fn generate_random_cover_scene(file_path: &str) {
     let path = Path::new(file_path);
     let file = File::create(path).unwrap();
     let w = &mut BufWriter::new(file);
-    serde_json::to_writer(w, &data);
+    serde_json::to_writer(w, &data).unwrap();
 }
 
 fn write_png(file_path: &str, image_width: usize, image_height: usize, pixels: &[Vec3d]) {

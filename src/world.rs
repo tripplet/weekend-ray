@@ -1,4 +1,6 @@
-use crate::{hittable::Hittable, sphere::Sphere};
+use std::borrow::Cow;
+
+use crate::{acceleration::Aabb, hittable::Hittable, sphere::Sphere};
 
 impl Hittable for Vec<Sphere> {
     fn hit<'a>(&'a self, ray: &crate::ray::Ray, t_min: f64, t_max: f64) -> Option<crate::hittable::HitRecord<'a>> {
@@ -13,5 +15,9 @@ impl Hittable for Vec<Sphere> {
         }
 
         hit
+    }
+
+    fn bounding_box(&self) -> Cow<'_, Aabb> {
+        todo!()
     }
 }

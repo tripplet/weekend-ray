@@ -89,6 +89,12 @@ impl_op_ex!(/ #[inline] |a: &Vec3d, b: f64| -> Vec3d { Vec3d {
     z: a.z / b,
 }});
 
+impl_op_ex!(/ #[inline] |a: f64, b: Vec3d| -> Vec3d { Vec3d {
+    x: a / b.x,
+    y: a / b.y,
+    z: a / b.z,
+}});
+
 impl_op_ex!(/= #[inline] |a: &mut Vec3d, b: f64| {
     a.x /= b;
     a.y /= b;
@@ -140,14 +146,17 @@ macro_rules! v3d_zero {
 }
 
 impl Vec3d {
+    #[inline]
     pub fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
+    #[inline]
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    #[inline]
     pub fn cross(&self, rhs: &Self) -> Self {
         Vec3d {
             x: self.y * rhs.z - self.z * rhs.y,
@@ -156,16 +165,19 @@ impl Vec3d {
         }
     }
 
+    #[inline]
     pub fn dot(&self, rhs: &Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
     /// Return true if the vector is close to zero in all dimensions.
+    #[inline]
     pub fn is_near_zero(&self) -> bool {
         let threshold = 1e-8;
         (self.x.abs() < threshold) && (self.y.abs() < threshold) && (self.z.abs() < threshold)
     }
 
+    #[inline]
     pub fn unit_vector(&self) -> Self {
         self / self.length()
     }
@@ -235,7 +247,7 @@ impl Vec3d {
 mod tests {
     use super::*;
     use approx::*;
-    use rand::{rngs::SmallRng, SeedableRng, Rng};
+    use rand::{rngs::SmallRng, Rng, SeedableRng};
 
     #[test]
     fn test_random_in_unit_sphere() {
@@ -256,7 +268,6 @@ mod tests {
             epsilon = 2.0 * f64::EPSILON
         );
     }
-
 
     #[test]
     fn test_random_unit_vector_rng_fn() {
