@@ -29,6 +29,24 @@ mod world;
 struct Config {
     #[command(subcommand)]
     command: InputFormat,
+}
+
+#[derive(Subcommand)]
+enum InputFormat {
+    /// Generate the book cover scene input data
+    Cover {
+        #[arg()]
+        file_path: String,
+    },
+
+    /// Use the file as input data
+    File(RenderOptions),
+}
+
+#[derive(clap::Args)]
+struct RenderOptions {
+    #[arg()]
+    file_path: String,
 
     #[arg(long)]
     width: u16,
@@ -48,21 +66,6 @@ struct Config {
     samples_per_pixel: u16,
 }
 
-#[derive(Subcommand)]
-enum InputFormat {
-    /// Generate the book cover scene input data
-    Cover {
-        #[arg()]
-        file_path: String,
-    },
-
-    /// Use the file as input data
-    File {
-        #[arg()]
-        file_path: String,
-    },
-}
-
 #[derive(serde::Serialize, serde::Deserialize)]
 struct InputData {
     camera: CameraConfig,
@@ -77,10 +80,15 @@ fn main() {
             generate_random_cover_scene(&file_path);
             return;
         }
-        InputFormat::File { file_path } => {
+        InputFormat::File(RenderOptions { ref file_path, .. }) => {
             // Read input file
             serde_json::from_str(&fs::read_to_string(file_path).expect("Unable to read input file")).unwrap()
         }
+    };
+
+    let cfg = match cfg.command {
+        InputFormat::File(r) => r,
+        _ => panic!(),
     };
 
     let start = std::time::Instant::now();
@@ -98,7 +106,6 @@ fn main() {
     if !cfg.quiet {
         println!("Rendering took {}", humantime::format_duration(start.elapsed()));
     }
-
 
     let image_height = (image_width as f64 / camera.cfg.aspect_ratio) as usize;
 
@@ -137,6 +144,7 @@ fn generate_random_cover_scene(file_path: &str) {
                     &Ray {
                         origin: center,
                         direction: world[0].origin - center,
+                        time: 0.0,
                     },
                     0.0,
                     f64::INFINITY,
@@ -148,8 +156,12 @@ fn generate_random_cover_scene(file_path: &str) {
             if (center - v3d!(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     // diffuse
-                    world.push(sphere::Sphere::new(
+
+                    let center2 = center + v3d!(0.0, rng.gen_range(0.0..0.5), 0.0);
+
+                    world.push(sphere::Sphere::new_moving(
                         center,
+                        center2,
                         0.2,
                         material::MaterialConfig::Lambertian(Lambertian {
                             albedo: color::random(&mut rng) * color::random(&mut rng),

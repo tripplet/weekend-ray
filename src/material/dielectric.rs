@@ -40,6 +40,7 @@ impl Material for Dielectric {
             ray: Ray {
                 origin: hit.point,
                 direction: new_direction,
+                time: ray.time,
             },
         })
     }

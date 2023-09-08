@@ -13,7 +13,7 @@ impl Material for Lambertian {
     fn scatter(
         &self,
         mut rnd: &mut dyn FnMut(Range<f64>) -> f64,
-        _ray: &crate::ray::Ray,
+        ray: &crate::ray::Ray,
         hit: &crate::hittable::HitRecord,
     ) -> Option<ScatterResult> {
         let mut scatter_direction = hit.normal + Vec3d::random_unit_vector_rng_fn(&mut rnd);
@@ -28,6 +28,7 @@ impl Material for Lambertian {
             ray: Ray {
                 origin: hit.point,
                 direction: scatter_direction,
+                time: ray.time,
             },
         })
     }

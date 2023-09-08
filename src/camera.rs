@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use indicatif::{ParallelProgressIterator, ProgressStyle, ProgressBar, ProgressDrawTarget};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand::prelude::*;
 use rayon::prelude::*;
 
@@ -163,6 +163,7 @@ impl Camera {
                 let r = Ray {
                     origin: camera_origin,
                     direction: pixel_sample - camera_origin,
+                    time: thread_rng.gen_range(0.0..=1.0),
                 };
 
                 color += Camera::ray_color(&r, self.max_depth, &mut thread_rng, objects);
